@@ -1,68 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d7e54748-cb70-4132-94cd-620276b61c5b" name="Default" comment="ignore">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/static/favicon.ico" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data-test.sqlite" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/lichi.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.vscode/settings.json" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/auth/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/auth/forms.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/auth/views.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/decorators.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/email.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/main/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/main/errors.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/main/forms.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/main/views.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/models.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/static/styles.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/403.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/change_email.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/change_password.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/change_email.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/change_email.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/confirm.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/confirm.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/reset_password.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/email/reset_password.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/login.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/register.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/reset_password.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/auth/unconfirmed.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/base.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/edit_profile.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/index.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/mail/new_user.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/mail/new_user.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/templates/user.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/config.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/manage.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/README" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/alembic.ini" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/env.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/script.py.mako" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/05820900b098_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/37e8d3d11530_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/502132e95820_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/5721833d4354_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/699625524884_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/6fec3332e12a_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/73eed53baf49_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/7b43b96d52b8_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/83c69e0d88dc_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/8a0ce59c1d2d_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/requirements.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/test_basics.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/test_user_model.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+    <list default="true" id="d7e54748-cb70-4132-94cd-620276b61c5b" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored mask=".pyc" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -140,11 +80,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/.gitignore">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="458">
-              <caret line="89" column="11" lean-forward="true" selection-start-line="89" selection-start-column="11" selection-end-line="89" selection-end-column="11" />
+            <state relative-caret-position="914">
+              <caret line="86" column="0" lean-forward="true" selection-start-line="86" selection-start-column="0" selection-end-line="86" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -192,11 +132,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="base.html" pinned="false" current-in-tab="false">
+      <file leaf-file-name="base.html" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/templates/base.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
-              <caret line="7" column="28" lean-forward="false" selection-start-line="7" selection-start-column="28" selection-end-line="7" selection-end-column="28" />
+            <state relative-caret-position="432">
+              <caret line="18" column="55" lean-forward="true" selection-start-line="18" selection-start-column="55" selection-end-line="18" selection-end-column="55" />
               <folding />
             </state>
           </provider>
@@ -278,13 +218,13 @@
         <option value="$PROJECT_DIR$/app/main/forms.py" />
         <option value="$PROJECT_DIR$/app/email.py" />
         <option value="$PROJECT_DIR$/app/static/styles.css" />
-        <option value="$PROJECT_DIR$/app/templates/base.html" />
         <option value="$PROJECT_DIR$/app/main/views.py" />
         <option value="$PROJECT_DIR$/app/__init__.py" />
         <option value="$PROJECT_DIR$/app/models.py" />
         <option value="$PROJECT_DIR$/app/templates/index.html" />
         <option value="$PROJECT_DIR$/manage.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/app/templates/base.html" />
       </list>
     </option>
   </component>
@@ -688,7 +628,14 @@
       <option name="project" value="LOCAL" />
       <updated>1498452310101</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="ignore">
+      <created>1498452356157</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1498452356157</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TodoView">
@@ -708,7 +655,7 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32875144" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295583" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297456" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32842582" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32842582" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.327252" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31584948" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1061,14 +1008,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/templates/base.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="7" column="28" lean-forward="false" selection-start-line="7" selection-start-column="28" selection-end-line="7" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/main/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="48">
@@ -1133,8 +1072,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="458">
-          <caret line="89" column="11" lean-forward="true" selection-start-line="89" selection-start-column="11" selection-end-line="89" selection-end-column="11" />
+        <state relative-caret-position="914">
+          <caret line="86" column="0" lean-forward="true" selection-start-line="86" selection-start-column="0" selection-end-line="86" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/templates/base.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="18" column="55" lean-forward="true" selection-start-line="18" selection-start-column="55" selection-end-line="18" selection-end-column="55" />
           <folding />
         </state>
       </provider>
