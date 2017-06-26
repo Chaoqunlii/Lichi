@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+    <div>
+{#    {% if current_user.can(Permission.WRITE_ARTICLES) %}#}
+    {{ wtf.quick_form(form) }}
+{#    {% endif %}#}
+
+    </div>
+    <ul class="posts">
+    {% for postContent in postContents %}
+        <li class="post">
+            <div class="profile-thumbnail">
+                <a href="{{ url_for('.user', username=postContent.post.author.username) }}">
+                    <img class="img-round profile-thumbnail"
+                         src="{{ postContent.post.author.gravatar(size=40) }}" alt="">
+                </a>
+            </div>
+            <div class="post-content">
+                <div class="post-date">{{ moment(postContent.timestamp).fromNow() }}</div>
+                <div class="post-author">
+                <a href="{{ url_for('.user', username=postContent.post.author.usernamse) }}">
+                    {{ postContent.post.author.username }}
+                </a>
+            </div>
+            <div class="post-body">{{ postContent.body }}</div>
+            </div>
+
+        </li>
+    {% endfor %}
+
+    </ul>
+
+
+{% endblock %}

@@ -1,0 +1,7 @@
+{{ user.username }},
+欢迎来到Lichi
+为确认您的账号，请点击下方链接：
+<a href="{{ url_for('auth.confirm', token=token, _external=True)}}">{{ url_for('auth.confirm', token=token, _external=True)}}</a>
+
+
+                                        来自：Lichi

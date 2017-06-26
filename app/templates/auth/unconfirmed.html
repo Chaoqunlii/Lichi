@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}账号未确认{% endblock %}
+{% block page_content %}
+    <div class="page-header">
+        <h1>{{ current_user.useraname }}</h1>
+        <h3>你还没有确认邮件，请注意查收</h3>
+        <a href="{{ url_for('auth.resend_confirmation') }}">点此重新发送邮件</a>
+    </div>
+
+{% endblock %}
