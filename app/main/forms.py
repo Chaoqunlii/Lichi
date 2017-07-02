@@ -48,3 +48,7 @@ class PostForm(FlaskForm):
     body = TextAreaField('说出你的想法', validators=[DataRequired()])
     version_intro = TextAreaField()
     submit = SubmitField('提交')
+
+class CommentForm(FlaskForm):
+    body = StringField('开始你的表演', validators=[DataRequired()])
+    submit = SubmitField('提交')

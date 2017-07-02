@@ -1,4 +1,4 @@
-from flask import current_app, request
+from flask import current_app, request, url_for
 # 导入current_app的config['secret'],生成验证邮件token
 from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +6,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from . import db, login_manager
 from datetime import datetime
 import hashlib
+from app.exceptions import ValidationError
 
 
 class Permission:
@@ -25,7 +26,7 @@ class Role(db.Model):
     permissions = db.Column(db.Integer)
 
     @staticmethod
-    # 添加角色到数据库，没什么用了
+    # 添加角色到数据库，初始化的时候用
     def insert_roles():
         roles = {
             'User': (Permission.FOLLOW |
@@ -50,6 +51,18 @@ class Role(db.Model):
         return '<Role %r>' % self.name
 
 
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    # 关注我的人,被动
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    # 我关注的人，主动
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow)
+
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +78,17 @@ class User(UserMixin, db.Model):
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    followed = db.relationship('Follow', foreign_keys=[Follow.follower_id],
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
+    #comment
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
+
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -77,6 +101,7 @@ class User(UserMixin, db.Model):
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = hashlib.md5(
                 self.email.encode('utf-8')).hexdigest()
+        self.follow(self)
 
     def can(self, permissions):
         return self.role is not None and \
@@ -136,6 +161,10 @@ class User(UserMixin, db.Model):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'change_email': self.id, 'new_email': new_email})
 
+    def generate_email_change_token(self, new_email, expiration=3600):
+        s =Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'change_email': self.id, 'new_email': new_email})
+
     def change_email(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
@@ -168,6 +197,87 @@ class User(UserMixin, db.Model):
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
+    #生成僵尸用户
+    @staticmethod
+    def generate_fake(count=100):
+        from sqlalchemy.exc import IntegrityError
+        from random import seed
+        import forgery_py
+
+        seed()
+        for i in range(count):
+            u = User(email=forgery_py.internet.email_address(),
+                     username=forgery_py.internet.user_name(True),
+                     password=forgery_py.lorem_ipsum.word(),
+                     confirmed=True,
+                     name=forgery_py.name.full_name(),
+                     location=forgery_py.address.city(),
+                     about_me=forgery_py.lorem_ipsum.sentence(),
+                     member_since=forgery_py.date.date(True))
+            db.session.add(u)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+
+    def is_following(self, user):
+        return self.followed.filter_by(
+            followed_id=user.id).first() is not None
+
+    def follow(self, user):
+        if not self.is_following(user):
+            # 主动关注user
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_followed_by(self, user):
+        return self.followers.filter_by(
+            follower_id=user.id).first() is not None
+
+    @staticmethod
+    def add_self_follows():
+        for user in User.query.all():
+            if not user.is_following(user):
+                user.follow(user)
+                db.session.add(user)
+                db.session.commit()
+
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
+            .filter(Follow.follower_id == self.id)
+
+    def generate_auth_token(self, expiration):
+        s = Serializer(current_app.config['SECRET_KEY'],
+                       expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
+
+    def to_json(self):
+        json_user = {
+            'url': url_for('api.get_user', id=self.id, _external=True),
+            'username': self.username,
+            'member_since': self.member_since,
+            'last_seen': self.last_seen,
+            'posts': url_for('api.get_user_posts', id=self.id, _external=True),
+            'post_count': self.posts.count()
+        }
+        return json_user
+
+
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -192,7 +302,22 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    postContents = db.relationship('PostContent', backref='post')
+    postContents = db.relationship('PostContent', backref='post', lazy='dynamic')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    last_updated_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+    #就一个时间 没什么好展示的，author可以通过postContent.post.author访问
+    # def to_json(self):
+    #     json_post = {
+    #         'url': url_for('api.get_post', id=self.id, _external=True),
+    #         'author': url_for('api.get_user', id=self.author_id, _external=True),
+    #         'posts': url_for('api.get_post', id=self.post.id, _external=True),
+    #         'post_count': self.posts.count()
+    #     }
+    #     return json_post
 
     def __repr__(self):
         return '<Post %r>' % self.id
@@ -204,18 +329,94 @@ class PostContent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     version = db.Column(db.Integer, index=True, default=1)
     version_intro = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime(), index=True, default=datetime.utcnow())
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     #Content
     body = db.Column(db.Text)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    #comment
+    comments = db.relationship('Comment', backref='postContent', lazy='dynamic')
+
 
     def __init__(self, **kwargs):
         super(PostContent, self).__init__(**kwargs)
         #创建postContent时查找其链接的Post，查找到并链接上
         if self.post_id is None:
             self.post_id = Post.query.filter_by(post_id=kwargs.get('post_id'))
+            post = Post.query.filter_by(self.post_id).first()
+            post.last_updated_time = datetime.utcnow()
+            db.session.add(post)
+            db.session.commit()
+
+    @staticmethod
+    def generate_fake(count=100):
+        from random import seed, randint
+        import forgery_py
+
+        seed()
+        user_count = User.query.count()
+        for i in range(count):
+            u = User.query.offset(randint(0, user_count-1)).first()
+            p = Post(author=u)
+            db.session.add(p)
+            db.session.commit()
+            pc = PostContent(body=forgery_py.lorem_ipsum.sentences(randint(1,3)),
+                             version_intro=forgery_py.lorem_ipsum.sentences(randint(1,3)),
+                             timestamp=forgery_py.date.date(True),
+                             post_id=p.id)
+            db.session.add(pc)
+            db.session.commit()
+
+    def to_json(self):
+        json_postContent = {
+            'url': url_for('api.get_postContent', id=self.id, _external=True),
+            'body': self.body,
+            'timestamp': self.timestamp,
+            'author': url_for('api.get_user', id=self.post.author_id,
+                              _external=True),
+            'comments': url_for('api.get_postContent_comments', id=self.id, _external=True),
+            'comment_count': self.comments.count()
+        }
+        return json_postContent
+
+    @staticmethod
+    def from_json(json_postContent):
+        body = json_postContent.get('body')
+        if body is None or body == '':
+            raise ValidationError('post does not have a body')
+        return PostContent(body=body)
 
 
     def __repr__(self):
         return '<postContent %r>' % self.version_intro
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    disabled = db.Column(db.BOOLEAN)
+    autor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    postContent_id = db.Column(db.Integer, db.ForeignKey('postContents.id'))
+
+    def to_json(self):
+        json_comment = {
+            'url': url_for('api.get_comment', id=self.id, _external=True),
+            'postContent': url_for('api.get_postContent', id=self.postContent_id, _external=True),
+            'body': self.body,
+            'timestamp': self.timestamp,
+            'author': url_for('api.get_user', id=self.postContent.post.author_id,
+                              _external=True)
+        }
+        return json_comment
+
+    @staticmethod
+    def from_json(json_comment):
+        body = json_comment.get('body')
+        if body is None or body == '':
+            raise ValidationError('comment does not have a body')
+        return Comment(body=body)
+
+    def __repr__(self):
+        return '<comment %r>' % self.body

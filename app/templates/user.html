@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% import "_macros.html" as macros %}
 {% block title %}Flasky - {{ user.username }}{% endblock %}
 
 {% block page_content %}
@@ -24,11 +24,36 @@
                 <a href="{{ url_for('auth.change_email_request') }}">更换邮箱</a>
                 <a href="{{ url_for('auth.change_password') }}">更换密码</a>
             {% endif %}
-            {% if current_user.is_administrator() %}
+            {% if current_user.is_administrator %}
             <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">Edit Profile [Admin]</a>
             <p><a href="mailto:{{ user.email }}">发送邮件至:  {{ user.email }}</a></p>
             {% endif %}
         </p>
+        {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+            {% if not current_user.is_following(user) %}
+                <a href="{{ url_for('.follow', username=user.username) }}" class="btn btn-primary">
+                关注
+                </a>
+            {% else %}
+                <a href="{{ url_for('.unfollow', username=user.username) }}" class="btn btn-default">
+                取消关注
+                </a>
+            {% endif %}
+        {% endif %}
+        <a href="{{ url_for('.followers', username=user.username) }}">
+            关注ta的人：<span class="badge">{{ user.followers.count() - 1 }}</span>
+        </a>
+        <a href="{{ url_for('.followed_by', username=user.username) }}">
+            ta关注的人：<span class="badge">{{ user.followed.count() - 1 }}</span>
+        </a>
+        {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
+            | <span class="label label-default">ta关注了你</span>
+        {% endif %}
     </div>
 </div>
+    <h3>ta发布的文章</h3>
+    {% include '_posts.html' %}
+    <div class="pagination">
+        {{ macros.pagination_widget(pagination, '.user', username=user.username) }}
+    </div>
 {% endblock %}
