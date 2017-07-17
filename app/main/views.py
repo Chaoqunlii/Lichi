@@ -1,19 +1,22 @@
 from flask import render_template, redirect, url_for, flash, current_app, abort, request, make_response
 from datetime import datetime
 from . import main
-from .forms import PostForm, EditProfileForm, EditProfileAdminForm, CommentForm
+from .forms import PostForm, EditProfileForm, EditProfileAdminForm, CommentForm, NewPostContentForm, MessageForm
 from .. import db
-from ..models import User, Role, Post, PostContent, Permission, Comment
+from ..models import User, Role, Post, PostContent, Permission, Comment, Team, Message, CommentLike, PostContentLike
 from flask_login import login_required, current_user
 from ..decorators import admin_required, permission_required
 from flask_sqlalchemy import get_debug_queries
+from qiniu import Auth
+
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
     form = PostForm()
     if current_user.can(Permission.WRITE_ARTICLES) and \
             form.validate_on_submit():
-        post = Post(author=current_user._get_current_object())
+        post = Post(author=current_user._get_current_object(),
+                    title=form.title.data)
         db.session.add(post)
         db.session.commit()
         postContent = PostContent(version_intro=form.version_intro.data,
@@ -21,9 +24,14 @@ def index():
                                   post_id=post.id)
 
         db.session.add(postContent)
+        team = Team(teammate_id=current_user.id, post_id=post.id)
+        db.session.add(team)
+        flash('发布成功')
     elif not current_user.can(Permission.WRITE_ARTICLES) and \
             form.validate_on_submit():
         flash('使用发布功能需要先登录')
+
+
 
     show_followed = False
     if current_user.is_authenticated:
@@ -37,10 +45,28 @@ def index():
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
+    unread_messages = []
+    if current_user.is_authenticated:
+        messages = current_user.receiver.order_by(Message.timestamp.desc()).all()
+        if messages:
+            for me in messages:
+                if not me.readed:
+                    unread_messages.append(me)
+
+
+
+    access_key = 'n_zDMmovafNwwBKr2UgED88ETSlk7rpgJwoWA8sP'
+    secret_key = 'B4pTA3T_UHo6-sfDc6R0lD7_HLF7IlMmeWSzpbHR'
+    q = Auth(access_key, secret_key)
+    bucket_name = 'lichi'
+
+    uptoken = q.upload_token(bucket_name)
+
+
+
     return render_template('index.html', form=form, posts=posts,
                            pagination=pagination, current_time=datetime.utcnow(),
-                           show_followed=show_followed)
-
+                           show_followed=show_followed, unread_messages=unread_messages, uptoken=uptoken)
 @main.route('/all')
 @login_required
 def show_all():
@@ -56,7 +82,7 @@ def show_followed():
     return resp
 
 
-@main.route('/user/<username>')
+@main.route('/user/<username>', methods=['GET', 'POST'])
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
 
@@ -66,8 +92,17 @@ def user(username):
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
-    return render_template('user.html', user=user, posts=posts,
-                           pagination=pagination)
+
+    labels =  ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"]
+    values = [10, 9, 8, 7, 6, 5]
+
+    form = MessageForm()
+    if form.validate_on_submit():
+        current_user.send_message(user, form.body.data)
+        flash('私信发送成功')
+
+    return render_template('user.html', user=user, posts=posts, form=form,
+                           pagination=pagination, values=values, labels=labels)
 
 
 @main.route('/eidt-profile', methods=['GET', 'POST'])
@@ -119,7 +154,8 @@ def post(id):
     post = Post.query.get_or_404(id)
     postContent = post.postContents.all()[-1]
     return redirect(url_for('.postContent', id=postContent.id))
-    # return render_template('postContent.html', postContent=postContent)
+    # versions = post.postContents.all()
+    # return render_template('post.html', postContent=postContent, versions=versions)
 
 @main.route('/postContent/<int:id>', methods=['GET', 'POST'])
 def postContent(id):
@@ -133,18 +169,39 @@ def postContent(id):
                           author=current_user._get_current_object())
         db.session.add(comment)
         flash('评论成功')
-        return redirect(url_for('.postContent', id=postContent.id, page=-1))
+        return redirect(url_for('.postContent', id=postContent.id, page=1))
     page = request.args.get('page', 1, type=int)
-    if page == -1:
-        page = (postContent.comments.count() - 1)/\
-            current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
-    pagination = postContent.comments.order_by(Comment.timestamp.asc()).paginate(
+    pagination = postContent.comments.order_by(Comment.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
         error_out=False
     )
     comments = pagination.items
+    postContents = Post.query.get_or_404(postContent.post_id).postContents.all()
+    team = [item.teammate for item in Team.query.filter_by(post_id=postContent.post_id).all()]
+
     return render_template('postContent.html', postContent=postContent, form=form,
-                           comments=comments, pagination=pagination)
+                           comments=comments, pagination=pagination, postContents=postContents, team=team)
+
+@main.route('/post<int:id>/newPostContent', methods=['GET', 'POST'])
+def newPostContent(id):
+    form = NewPostContentForm()
+    post = Post.query.get_or_404(id)
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+            post.author == current_user and \
+            form.validate_on_submit():
+        postContent = PostContent(version_intro=form.version_intro.data,
+                                  body=form.body.data,
+                                  post_id=post.id)
+        postContent.version = post.postContents.all()[-1].version + 1
+        post.ping()
+        db.session.add(postContent)
+        db.session.add(post)
+        db.session.commit()
+        flash('发布成功')
+        return redirect(url_for('.post', id=post.id))
+    return render_template('newPostContent.html', form=form)
+
+
 
 @main.route('/edit/<int:id>', methods=["GET", "POST"])
 def edit(id):
@@ -230,6 +287,89 @@ def followed_by(username):
                            endpoint='.followed_by', pagination=pagination, follows=follows)
 
 
+@main.route('/postContent/<int:id>/join')
+@login_required
+def join(id):
+    postContent = PostContent.query.get_or_404(id)
+    post = Post.query.get_or_404(postContent.post_id)
+    author = post.author
+
+    teammate_already = Team.query.filter_by(teammate_id=current_user.id, post_id=post.id)
+    if teammate_already:
+        flash('您已经在团队内了')
+    else:
+        message_text = str(current_user.username) + ': 我想加入你的团队,一起完成 ' + str(post.title)
+        current_user.send_message(author, message_text, request=True, postCont_id=postContent.id)
+        flash('团队加入请求已发送，请等待对方确认')
+    return redirect(url_for('.postContent', id=id))
+
+
+@main.route('/index/message_read/<int:id>')
+@login_required
+def read_message(id):
+    message = Message.query.get_or_404(id)
+    message.readed = True
+    db.session.add(message)
+    return redirect(url_for('.index'))
+
+@main.route('/index/message_accept/<int:id>')
+@login_required
+def accept_message(id):
+    message = Message.query.get_or_404(id)
+    postContent_id = message.postCont_id
+    if postContent_id:
+        post_id = PostContent.query.get_or_404(postContent_id).post_id
+        team = Team(teammate_id=message.sender_id, post_id=post_id)
+        db.session.add(team)
+        flash('您接受了 ' + str(message.sender.username) + ' 加入团队的请求')
+        return redirect(url_for('.index'))
+
+@main.route('/comment/<int:id>/like')
+@login_required
+def commentLike(id):
+    comment = Comment.query.get_or_404(id)
+    commentalready = CommentLike.query.filter_by(author_id=current_user.id, comment_id=comment.id)
+    if commentalready:
+        flash()
+    # comment = Comment.get_or_404(id)
+
+@main.route('/comment/<int:id>/like')
+@login_required
+def commentDislike(id):
+    comment = Comment.query.get_or_404(id)
+    commentalready = CommentLike.query.filter_by(author_id=current_user.id, comment_id=comment.id)
+    if commentalready:
+        flash()
+    # comment = Comment.get_or_404(id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @main.route('/moderate')
 @login_required
 @permission_required(Permission.MODERATE_COMMENTS)
@@ -273,27 +413,3 @@ def after_request(response):
                 %(query.statement, query.parameters, query.duration, query.context))
     return response
 
-
-
-@main.route('/secret')
-@login_required
-def secret():
-    return 'Only authenticated users are allowed'
-
-
-from ..decorators import admin_required, permission_required
-from ..models import Permission
-
-
-@main.route('/admin')
-@login_required
-@admin_required
-def for_admins_only():
-    return '管理员大人~~'
-
-
-@main.route('/moderator')
-@login_required
-@permission_required(Permission.MODERATE_COMMENTS)
-def for_moderators_only():
-    return '协管员大人'

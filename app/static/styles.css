@@ -1,3 +1,7 @@
+#navbar{
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0, 0.0975);
+}
 .profile-thumbnail {
     position: absolute;
 }
@@ -27,9 +31,11 @@ ul.posts li.post:hover {
 }
 div.post-date {
     float: right;
+    font-size: 14px;
 }
-div.post-author {
-    font-weight: bold;
+div.post-author a{
+    font-weight: normal;
+    color: black;
 }
 div.post-thumbnail {
     position: absolute;
@@ -60,6 +66,15 @@ ul.comments li.comment:hover {
 div.comment-date {
     float: right;
 }
+div.comment-like {
+    float: right;
+    color: #bebebe;
+}
+div.comment-liked {
+    float: right;
+    color: #bebebe;
+}
+
 div.comment-author {
     font-weight: bold;
 }
@@ -104,4 +119,105 @@ div.flask-pagedown-preview h3 {
 }
 .table.followers tr {
     border-bottom: 1px solid #e0e0e0;
+}
+a{
+    text-decoration: none !important;
+    /*color: #8590a6;*/
+    color: #434343
+}
+.post-body{
+    display: block;
+    color: #262626;
+    /*fon-size: 25px !important;*/
+}
+.post-body div{
+    font-size: 20px;
+}
+
+.post-author{
+    font-size: 12px;
+}
+.modal-content{
+    border-radius: 4px !important;
+}
+.mail-box-svg{
+    width: 28px !important;
+    height: 28px !important;
+    fill: rgba(0,0,0,.44);
+}
+#mail-box{
+    margin-bottom: 0px !important;
+    padding-bottom: 1px !important;
+    padding-right: 8px !important;
+}
+.mail-box{
+    background-color: #d9534f;
+    width: 8px;
+    height: 8px;
+    position: absolute;
+    bottom: 27px;
+    right: 12px;
+    border-radius: 50%;
+    float: right;
+}
+@media screen and (min-width:991px) {
+    .dropdown-menu {
+        width: 360px !important;
+        position: absolute !important;
+        left: -150px !important;
+
+    }
+}
+.accept-reject-btns{
+    display: block;
+    padding: 3px 20px;
+}
+.accept-reject-btns a{
+    width: 30%;
+}
+.icon-bar{
+    background-color:  rgba(0,0,0,.44);
+}
+.mail-box-message{
+    color: #3e7ac2;
+    white-space: normal;
+    margin-top: 10px;
+}
+.line-divider{
+    width: inherit;
+    height: 3px;
+    border-bottom: 1px solid rgba(0,0,0,.0975);
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+.teammates{
+    margin-bottom: 20px;
+}
+.teammate{
+    display: block;
+    float: left;
+    height: 100px;
+    width: 100px;
+    margin-bottom: inherit;
+}
+.join{
+    width: 20px;
+}
+.teammate-name{
+    display: block;
+    height: 10px;
+    width: 50px;
+    margin-top: 50px;
+}
+.radarChart{
+    width: 300px;
+    height: 300px;
+}
+#fileinfo{
+    max-height: 600px;
+    max-width: 600px;
+}
+img{
+    max-height: 600px !important;
+    max-width: 600px;
 }

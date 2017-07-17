@@ -2,16 +2,242 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "_macros.html" as macros %}
 
-{% block page_content %}
-    <div class="page-header">
-        <form class="form" , role="form" , method="POST">
-            {{ form.body.label }}
-            {{ form.body(class="ckeditor") }}
-            {{ wtf.form_field(form.version_intro) }}
-            {{ wtf.form_field(form.submit) }}
-            {{ form.csrf_token }}
-        </form>
+{% block write_article %}
+    <!-- Button trigger modal -->
+    <li>
+        <a data-toggle="modal" data-target="#myModal">
+            写作
+        </a>
+    </li>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Write</h4>
+                </div>
+                <div class="modal-body">
+
+                    <form class="form" , role="form" , method="POST">
+                        {{ wtf.form_field(form.title) }}
+                        {{ form.body.label }}
+                        {{ form.body(class="ckeditor") }}
+                        <div id="container">
+
+                            {{ wtf.form_field(form.version_intro) }}
+
+                            <div class="modal-footer">
+                                {{ wtf.form_field(form.submit) }}
+                            </div>
+                            {{ form.csrf_token }}
+                        </div>
+                    </form>
+
+
+                    <a class="btn btn-default btn-small btn-info" id="pickfiles" style="width:160px" href="#">
+                        <i class="glyphicon glyphicon glyphicon-picture"></i>
+                        <span>上传图片</span>
+                    </a>
+                    <i>点击按钮上传图片,然后鼠标移到图片上复制黏贴(Ctrl+C/V)到上方文本编辑框中(技术有限，暂时只能做出这种效果了,bug修复中,请见谅)</i>
+
+                    <div id="fileinfo">图片列表</div>
+
+
+                </div>
+            </div>
+        </div>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <script type="text/javascript" language="JavaScript">
+        var uploader = Qiniu.uploader({
+            runtimes: 'html5,flash,html4',    //上传模式,依次退化
+            browse_button: 'pickfiles',       //上传选择的点选按钮，**必需**
+            // uptoken_url: '/token',            //Ajax请求upToken的Url，**强烈建议设置**（服务端提供）#}
+            // uptoken : '', //若未指定uptoken_url,则必须指定 uptoken ,uptoken由其他程序生成
+            uptoken: '{{ uptoken }}',
+            unique_names: true, // 默认 false，key为文件名。若开启该选项，SDK为自动生成上传成功后的key（文件名）。
+            // save_key: true,   // 默认 false。若在服务端生成uptoken的上传策略中指定了 `sava_key`，则开启，SDK会忽略对key的处理
+            domain: 'http://osuoihdct.bkt.clouddn.com/',   //bucket 域名，下载资源时用到，**必需**
+            get_new_uptoken: false,  //设置上传文件的时候是否每次都重新获取新的token
+            {#                            multi_selection: false,#}
+            container: 'container',           //上传区域DOM ID，默认是browser_button的父元素，
+            max_file_size: '100mb',           //最大文件体积限制
+            flash_swf_url: 'js/plupload/Moxie.swf',  //引入flash,相对路径
+            max_retries: 3,                   //上传失败最大重试次数
+            dragdrop: true,                   //开启可拖曳上传
+            drop_element: 'container',        //拖曳上传区域元素的ID，拖曳文件或文件夹后可触发上传
+            chunk_size: '4mb',                //分块上传时，每片的体积
+            auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传
+
+            init: {
+                'FilesAdded': function (up, files) {
+                    plupload.each(files, function (file) {
+                        // 文件添加进队列后，处理相关的事情
+                        document.getElementById("fileinfo").innerHTML += '<div id="' + file.id + '">' + file.name + "&nbsp;&nbsp;&nbsp;(" + plupload.formatSize(file.size) + ")&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b></b> <i></i></div><br>";
+                    });
+                },
+                'BeforeUpload': function (up, file) {
+                    // 每个文件上传前，处理相关的事情
+                },
+                'UploadProgress': function (up, file) {
+                    // 每个文件上传时，处理相关的事情
+                    document.getElementById(file.id).getElementsByTagName("b")[0].innerHTML = "<span>" + file.percent + "%</span>"
+                },
+                'FileUploaded': function (up, file, info) {
+                    // 每个文件上传成功后，处理相关的事情
+                    // 其中info是文件上传成功后，服务端返回的json，形式如：
+                    // {
+                    //    "hash": "Fh8xVqod2MQ1mocfI4S4KpRL6D98",
+                    //    "key": "gogopher.jpg"
+                    //  }
+                    // 查看简单反馈
+                    var domain = up.getOption('domain');
+                    var res = JSON.parse(info);
+                    var sourceLink = domain + res.key
+                    document.getElementById(file.id).getElementsByTagName("b")[0].innerHTML = "<img src=" + sourceLink + "></img>";
+
+                    // var sourceLink = domain + "/" + info.key;
+                    // document.getElementById(file.id).getElementsByTagName("b")[0].innerHTML = "<span>" + sourceLink + "%</span>"
+
+                },
+                'Error': function (up, err, errTip) {
+                    //上传出错时，处理相关的事情
+                    document.write(errTip)
+                },
+                'UploadComplete': function () {
+                    //队列文件处理完毕后，处理相关的事情
+                },
+                'Key': function (up, file) {
+                    // 若想在前端对每个文件的key进行个性化处理，可以配置该函数
+                    // 该配置必须要在unique_names: false，save_key: false时才生效
+                    var key = "";
+                    // do something with key here
+                    return key
+                }
+
+            }
+        });
+
+        // domain 为七牛空间（bucket)对应的域名，选择某个空间后，可通过"空间设置->基本设置->域名设置"查看获取
+
+        // uploader 为一个plupload对象，继承了所有plupload的方法，参考http://plupload.com/docs
+    </script>
+
+{% endblock %}
+
+
+{% block mail_box %}
+    <li class="dropdown">
+        <a class="" type="button" id="mail-box"
+           data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            {#                                <span class="glyphicon glyphicon-bell" aria-hidden="true"></span>#}
+
+            <svg class="mail-box-svg">
+                <g>
+                    <path d="M2.502 14.08C3.1 10.64 2 3 8.202 1.62 8.307.697 9.08 0 10 0s1.694.697 1.797 1.62C18 3 16.903 10.64 17.497 14.076c.106 1.102.736 1.855 1.7 2.108.527.142.868.66.793 1.206-.075.546-.542.95-1.09.943H1.1C.55 18.34.084 17.936.01 17.39c-.075-.547.266-1.064.794-1.206.963-.253 1.698-1.137 1.698-2.104zM10 22c-1.417.003-2.602-1.086-2.73-2.51-.004-.062.02-.124.063-.17.043-.045.104-.07.166-.07h5c.063 0 .124.025.167.07.044.046.067.108.063.17-.128 1.424-1.313 2.513-2.73 2.51z">
+                    </path>
+                    {% if unread_messages %}
+                        <div class="mail-box"></div>
+                    {% endif %}
+                </g>
+
+            </svg>
+            {% if unread_messages %}
+                <div class="mail-box"></div>
+            {% endif %}
+        </a>
+
+        <ul class="dropdown-menu dropdown-men" aria-labelledby="dropdownMenu1">
+            {% if unread_messages %}
+                {% for message in unread_messages %}
+                    {% if not message.readed %}
+                        <li>
+                            <a href="">
+                                {{ message.sender.username }}： <br>
+                                <p class="mail-box-message">{{ message.message }}</p> <br>
+                                {{ moment(message.timestamp).calendar() }}
+                            </a>
+                            {% if message.postCont_id %}
+                                <div class="accept-reject-btns">
+                                    <span><a class="btn btn-success"
+                                             href="{{ url_for('.accept_message', id=message.id) }}">接受</a></span>
+                                    <span><a class="btn btn-danger"
+                                             href="{{ url_for('.read_message', id=message.id) }}">忽略</a></span>
+                                </div>
+                            {% else %}
+                                <div class="accept-reject-btns">
+                                    <a class="btn btn-danger"
+                                       href="{{ url_for('.read_message', id=message.id) }}">标为已读</a>
+                                </div>
+                            {% endif %}
+                        </li>
+
+
+                        {#                        现在都是未读的 下面这段没用了#}
+                        {#                    {% elif message.readed %}#}
+                        {#                        <li>#}
+                        {#                            <a href="">#}
+                        {#                                {{ message.sender.username }}： <br>#}
+                        {#                                {{ message.message }} <br>#}
+                        {#                                {{ message.timestamp }}#}
+                        {#                            </a>#}
+                        {#                            {% if message.postCont_id %}#}
+                        {#                                <a class="btn btn-success" href="{{ url_for('.accept_message', id=message.id) }}">接受</a>#}
+                        {#                                <a class="btn btn-danger" href="{{ url_for('.read_message', id=message.id) }}">忽略</a>#}
+                        {#                            {% else %}#}
+                        {#                                <a href="{{ url_for('.read_message', id=message.id) }}">标为已读</a>#}
+                        {#                            {% endif %}#}
+                        {#                        </li>#}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <li><a href="">您当前还没有未读消息</a></li>
+            {% endif %}
+            <li><a href="">查看所有消息</a></li>
+        </ul>
+    </li>
+
+
+{% endblock %}
+
+
+
+{% block page_content %}
+    {#        <div class="page-header">#}
+    {#            <form class="form" , role="form" , method="POST">#}
+    {#                {{ wtf.form_field(form.title) }}#}
+    {#                {{ form.body.label }}#}
+    {#                {{ form.body(class="ckeditor") }}#}
+    {#                {{ wtf.form_field(form.version_intro) }}#}
+    {#                {{ form.csrf_token }}#}
+    {#                {{ wtf.form_field(form.submit) }}#}
+    {##}
+    {#            </form>#}
+    {#        </div>#}
     <div class="post-tabs">
         <ul class="nav nav-tabs">
             <li {% if not show_followed %} class="active" {% endif %}>

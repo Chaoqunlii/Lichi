@@ -7,6 +7,7 @@
     </div>
     <div class="col-md-4">
     {{ wtf.quick_form(form) }}
+    {{ form.csrf_token }}
         <br>
         <a href="{{ url_for('auth.login') }}">
             已有账号?去登录

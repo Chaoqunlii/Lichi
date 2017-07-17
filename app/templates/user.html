@@ -3,54 +3,118 @@
 {% block title %}Flasky - {{ user.username }}{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}">
-    <div class="profile-header">
-        <h1>{{ user.username }}</h1>
-        {% if user.name or user.location %}
-        <p>
-            {% if user.name %}{{ user.name }}<br>{% endif %}
-            {% if user.location %}
-                From <a href="http://maps.google.com/?q={{ user.location }}">{{ user.location }}</a><br>
+    <div class="page-header">
+        <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}">
+        <div class="profile-header">
+            <h1>{{ user.username }}</h1>
+            {% if user.name or user.location %}
+                <p>
+                    {% if user.name %}{{ user.name }}<br>{% endif %}
+                    {% if user.location %}
+                        地址: <a href="http://ditu.amap.com/search?query={{ user.location }}">{{ user.location }}</a><br>
+                    {% endif %}
+                </p>
             {% endif %}
-        </p>
-        {% endif %}
 
-        {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
-        <p>Member since {{ moment(user.member_since).format('L') }}. Last seen {{ moment(user.last_seen).fromNow() }}.</p>
-        <p>
-            {% if user == current_user %}
-            <a class="btn btn-default" href="{{ url_for('.edit_profile') }}">Edit Profile</a>
-                <a href="{{ url_for('auth.change_email_request') }}">更换邮箱</a>
-                <a href="{{ url_for('auth.change_password') }}">更换密码</a>
+            {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
+            <p>{{ moment(user.member_since).format('L') }} 加入.      </br>
+                {{ moment(user.last_seen).fromNow() }}登录过.</p>
+            <p>
+
+                <a class="btn btn-default" data-toggle="modal" data-target="#myModal">私信ta</a>
+
+                {% if user == current_user %}
+                    <a class="btn btn-default" href="{{ url_for('.edit_profile') }}">编辑资料</a>
+                    <a class="btn btn-default" href="{{ url_for('auth.change_email_request') }}">更换邮箱</a>
+                    <a class="btn btn-default" href="{{ url_for('auth.change_password') }}">更换密码</a>
+                {% endif %}
+
+                {% if current_user.is_administrator %}
+                    <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">编辑资料 [Admin]</a>
+                    <p><a href="mailto:{{ user.email }}">发送邮件至: {{ user.email }}</a></p>
+                {% endif %}
+            </p>
+            {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+                {% if not current_user.is_following(user) %}
+                    <a href="{{ url_for('.follow', username=user.username) }}" class="btn btn-primary">
+                        关注
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('.unfollow', username=user.username) }}" class="btn btn-default">
+                        取消关注
+                    </a>
+                {% endif %}
             {% endif %}
-            {% if current_user.is_administrator %}
-            <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">Edit Profile [Admin]</a>
-            <p><a href="mailto:{{ user.email }}">发送邮件至:  {{ user.email }}</a></p>
+            <a href="{{ url_for('.followers', username=user.username) }}">
+                关注ta的人：<span class="badge">{{ user.followers.count() - 1 }}</span>
+            </a>
+            <a href="{{ url_for('.followed_by', username=user.username) }}">
+                ta关注的人：<span class="badge">{{ user.followed.count() - 1 }}</span>
+            </a>
+            {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
+                | <span class="label label-default">ta关注了你</span>
             {% endif %}
-        </p>
-        {% if current_user.can(Permission.FOLLOW) and user != current_user %}
-            {% if not current_user.is_following(user) %}
-                <a href="{{ url_for('.follow', username=user.username) }}" class="btn btn-primary">
-                关注
-                </a>
-            {% else %}
-                <a href="{{ url_for('.unfollow', username=user.username) }}" class="btn btn-default">
-                取消关注
-                </a>
-            {% endif %}
-        {% endif %}
-        <a href="{{ url_for('.followers', username=user.username) }}">
-            关注ta的人：<span class="badge">{{ user.followers.count() - 1 }}</span>
-        </a>
-        <a href="{{ url_for('.followed_by', username=user.username) }}">
-            ta关注的人：<span class="badge">{{ user.followed.count() - 1 }}</span>
-        </a>
-        {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
-            | <span class="label label-default">ta关注了你</span>
-        {% endif %}
+        </div>
     </div>
-</div>
+
+    {#私信模态框#}
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Write</h4>
+                </div>
+                <div class="modal-body">
+
+                    <form class="form" , role="form" , method="POST">
+                        {{ wtf.form_field(form.body) }}
+                        <div id="container">
+                            <div class="modal-footer">
+                                {{ wtf.form_field(form.submit) }}
+                            </div>
+                            {{ form.csrf_token }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div class="radarChart">
+
+        <script src="http://cdn.bootcss.com/Chart.js/2.6.0/Chart.min.js"></script>
+
+
+        <canvas id="myChart" width="300" height="300"></canvas>
+        <script>
+            var ctx = document.getElementById("myChart").getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [{% for label in labels %}"{{ label }}",{% endfor %}],
+                    datasets: [{
+                        label: '# of Votes',
+                        data: [{% for value in values %} "{{ value }}", {% endfor %}],
+                    }]
+                },
+            });
+        </script>
+
+
+    </div>
+
+
+
+
     <h3>ta发布的文章</h3>
     {% include '_posts.html' %}
     <div class="pagination">

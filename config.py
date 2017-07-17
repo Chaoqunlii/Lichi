@@ -20,6 +20,9 @@ class Config:
     FLASKY_COMMENTS_PER_PAGE = 10
     FLASKY_DB_QUERY_TIMEOUT = 0.5
     FLASKY_SLOW_DB_QUERY_TIME = 0.5
+    QINIU_AK = 'n_zDMmovafNwwBKr2UgED88ETSlk7rpgJwoWA8sP'
+    QINIU_SK = 'B4pTA3T_UHo6-sfDc6R0lD7_HLF7IlMmeWSzpbHR'
+    BUCKET_NAME = 'lichi'
 
     @staticmethod
     def init_app(app):
@@ -48,7 +51,7 @@ class ProductionConfig(Config):
         if getattr(cls, 'MAIL_USERNAME', None) is not None:
             credentials = (cls.MAIL_USERNAME, cls.MAIL_PASSWORD)
             if getattr(cls, 'MAIL_USE_TLS', None):
-                secure
+                secure = ()
         mail_handler = SMTPHandler(
             mailhost=(cls.MAIL_SERVER, cls.MAIL_PORT),
             fromaddr=cls.FLASKY_MAIL_SENDER,

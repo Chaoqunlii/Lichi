@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+{% block title %} Flask-post {% endblock %}
+{% block page_content %}
+        <div class="img-rounded profile-thumbnail">
+        <a href="{{ url_for('.user', username=postContent.post.author.username) }}">
+            <img class="img-rounded profile-thumbnail"
+                 src="{{ postContent.post.author.gravatar(size=40) }}" alt="">
+        </a>
+    </div>
+    <div class="post-content">
+        <div class="post-date">{{ moment(postContent.timestamp).format('LLL') }}</div>
+        <div class="post-author">dd
+            <a href="{{ url_for('.user', username=postContent.post.author.username) }}">
+                {{ postContent.post.author.username }}
+            </a>
+        </div>
+        <div class="post-body">{{ postContent.body|safe }}</div>
+        <div class="post-footer">
+            <a href="{{ url_for('.post', id=postContent.post.id) }}">
+                <span class="label label-default">查看</span>
+            </a>
+            <a type="btn" href="{{ url_for('.newPostContent', id=postContent.post.id) }}">
+                添加版本
+            </a>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                    选择版本 <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    {% for postContent in postContents %}
+                        <li><a href="{{ url_for('.postContent', id=postContent.id) }}">{{ postContent.version }}:{{ postContent.version_intro }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+
+
+
+
+            <a href="{{ url_for('.postContent', id=postContent.id) }}">
+                    <span class="label label-primary">
+                        {{ postContent.comments.count() }}评论
+                    </span>
+            </a>
+
+        </div>
+    </div>
+    <h4 id="comments">评论</h4>
+    {% if current_user.can(Permission.COMMENT) and form %}
+        {{ wtf.quick_form(form) }}
+    {% endif %}
+    {% include '_comments.html' %}
+    {% if pagination %}
+        <div class="pagination">
+            {{ macros.pagination_widget(pagination, '.postContent', fragment='#comments', id=postContent.id) }}
+        </div>
+    {% endif %}
+
+
+{% endblock %}

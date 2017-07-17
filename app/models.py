@@ -34,7 +34,7 @@ class Role(db.Model):
                      Permission.WRITE_ARTICLES, True),
             'Moderator': (Permission.FOLLOW |
                           Permission.COMMENT |
-                          Permission.WRITE_ARTICLES |
+                         Permission.WRITE_ARTICLES |
                           Permission.MODERATE_COMMENTS, False),
             'Administrator': (0xff, False)
         }
@@ -62,6 +62,33 @@ class Follow(db.Model):
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow)
 
 
+class Team(db.Model):
+    __tablename__ = 'teams'
+    id = db.Column(db.Integer, primary_key=True)
+    teammate_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+
+    def __repr__(self):
+        return '<team of post %r>' % self.post_id
+
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    message = db.Column(db.Text())
+    # 开关  switch True 则这条信息带有请求
+    # switch = db.Column(db.BOOLEAN, default=False)
+    # 已读
+    readed = db.Column(db.BOOLEAN, default=False)
+    # 从postContent跳转过来的暂时认定为请求加入团队
+    postCont_id = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<message %r>' % self.message
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -86,9 +113,25 @@ class User(UserMixin, db.Model):
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
-    #comment
-    comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
+    teammate = db.relationship('Team', foreign_keys=[Team.teammate_id],
+                               backref=db.backref('teammate', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+
+    sender = db.relationship('Message', foreign_keys=[Message.sender_id],
+                             backref=db.backref('sender', lazy='joined'),
+                             lazy='dynamic',
+                             cascade='all, delete-orphan')
+
+    receiver = db.relationship('Message', foreign_keys=[Message.receiver_id],
+                               backref=db.backref('receiver', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+
+    # comment
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
+    commentLike = db.relationship('CommentLike', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -162,7 +205,7 @@ class User(UserMixin, db.Model):
         return s.dumps({'change_email': self.id, 'new_email': new_email})
 
     def generate_email_change_token(self, new_email, expiration=3600):
-        s =Serializer(current_app.config['SECRET_KEY'], expiration)
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'change_email': self.id, 'new_email': new_email})
 
     def change_email(self, token):
@@ -197,7 +240,7 @@ class User(UserMixin, db.Model):
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
-    #生成僵尸用户
+    # 生成僵尸用户
     @staticmethod
     def generate_fake(count=100):
         from sqlalchemy.exc import IntegrityError
@@ -249,7 +292,7 @@ class User(UserMixin, db.Model):
 
     @property
     def followed_posts(self):
-        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id) \
             .filter(Follow.follower_id == self.id)
 
     def generate_auth_token(self, expiration):
@@ -277,6 +320,12 @@ class User(UserMixin, db.Model):
         }
         return json_user
 
+    def send_message(self, user, message, **kwargs):
+        m = Message(sender=self,
+                    receiver=user,
+                    postCont_id = kwargs.get('postCont_id'),
+                    message=message)
+        db.session.add(m)
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -286,7 +335,7 @@ class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
 
-    def is_adminstrator(self):
+    def is_administrator(self):
         return False
 
 
@@ -302,14 +351,17 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    title = db.Column(db.Text())
     postContents = db.relationship('PostContent', backref='post', lazy='dynamic')
+    team = db.relationship('Team', backref='post', uselist=False)
     created_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     last_updated_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     def ping(self):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
-    #就一个时间 没什么好展示的，author可以通过postContent.post.author访问
+
+    # 就一个时间 没什么好展示的，author可以通过postContent.post.author访问
     # def to_json(self):
     #     json_post = {
     #         'url': url_for('api.get_post', id=self.id, _external=True),
@@ -324,29 +376,34 @@ class Post(db.Model):
 
 
 class PostContent(db.Model):
-    #不同版本的post
+    # 不同版本的post
     __tablename__ = 'postContents'
     id = db.Column(db.Integer, primary_key=True)
-    version = db.Column(db.Integer, index=True, default=1)
-    version_intro = db.Column(db.Text)
+    version = db.Column(db.Integer, index=True, default=1, unique=True)
+    version_intro = db.Column(db.Text, )
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
-    #Content
+    # Content
     body = db.Column(db.Text)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
-    #comment
+    # comment
     comments = db.relationship('Comment', backref='postContent', lazy='dynamic')
+    postContentLikes = db.relationship('PostContentLike', backref='postContentLike', lazy='dynamic')
 
-
-    def __init__(self, **kwargs):
-        super(PostContent, self).__init__(**kwargs)
-        #创建postContent时查找其链接的Post，查找到并链接上
-        if self.post_id is None:
-            self.post_id = Post.query.filter_by(post_id=kwargs.get('post_id'))
-            post = Post.query.filter_by(self.post_id).first()
-            post.last_updated_time = datetime.utcnow()
-            db.session.add(post)
-            db.session.commit()
+    # def __init__(self, **kwargs):
+    #     super(PostContent, self).__init__(**kwargs)
+    # #     #创建postContent时查找其链接的Post，查找到并链接上
+    # #     if self.post_id is None:
+    # #         self.post_id = Post.query.filter_by(post_id=kwargs.get('post_id'))
+    # #         post = Post.query.filter_by(self.post_id).first()
+    # #         post.last_updated_time = datetime.utcnow()
+    # #
+    # #         db.session.add(post)
+    # #         db.session.add(self)
+    # #         db.session.commit()
+    #     # if self.post_id:
+    #     #     self.post_id = Post
+    #     #     self.version = post.postContents.all()[-1].version + 1
 
     @staticmethod
     def generate_fake(count=100):
@@ -356,12 +413,12 @@ class PostContent(db.Model):
         seed()
         user_count = User.query.count()
         for i in range(count):
-            u = User.query.offset(randint(0, user_count-1)).first()
+            u = User.query.offset(randint(0, user_count - 1)).first()
             p = Post(author=u)
             db.session.add(p)
             db.session.commit()
-            pc = PostContent(body=forgery_py.lorem_ipsum.sentences(randint(1,3)),
-                             version_intro=forgery_py.lorem_ipsum.sentences(randint(1,3)),
+            pc = PostContent(body=forgery_py.lorem_ipsum.sentences(randint(1, 3)),
+                             version_intro=forgery_py.lorem_ipsum.sentences(randint(1, 3)),
                              timestamp=forgery_py.date.date(True),
                              post_id=p.id)
             db.session.add(pc)
@@ -387,6 +444,16 @@ class PostContent(db.Model):
         return PostContent(body=body)
 
 
+    def totalLikes(self):
+        total = 0
+        for l in PostContentLike.query.filter_by(postContent_id=self.id).all():
+            if l.like:
+                total += 1
+            if l.dislike:
+                total -= 1
+        return total
+
+
     def __repr__(self):
         return '<postContent %r>' % self.version_intro
 
@@ -399,6 +466,7 @@ class Comment(db.Model):
     disabled = db.Column(db.BOOLEAN)
     autor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     postContent_id = db.Column(db.Integer, db.ForeignKey('postContents.id'))
+    commentLikes = db.relationship('CommentLike', backref='commentLike', lazy='dynamic')
 
     def to_json(self):
         json_comment = {
@@ -418,5 +486,29 @@ class Comment(db.Model):
             raise ValidationError('comment does not have a body')
         return Comment(body=body)
 
+
     def __repr__(self):
         return '<comment %r>' % self.body
+
+
+class CommentLike(db.Model):
+    __tablename__ = 'commentLikes'
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __repr__(self):
+        return '<CommentLike to %r>' % self.id
+
+
+class PostContentLike(db.Model):
+    __tablename__ = 'postContentLikes'
+    id = db.Column(db.Integer, primary_key=True)
+    postContent_id = db.Column(db.Integer, db.ForeignKey('postContents.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    like = db.Column(db.BOOLEAN)
+    dislike = db. Column(db.BOOLEAN)
+
+
+    def __repr__(self):
+        return '<PostContentLike to %r>' % self.id

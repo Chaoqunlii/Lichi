@@ -10,7 +10,34 @@
                 <div class="comment-date">{{ moment(comment.timestamp).fromNow() }}</div>
                 <div class="comment-author"><a
                         href="{{ url_for('.user', username=comment.author.username) }}">{{ comment.author.username }}</a>
+
                 </div>
+
+{#            点赞功能 简直崩溃擦#}
+{#                <div class="comment-like">#}
+{#                    {% for cl in comment.commentLikes %}#}
+{#                        {% if cl.author == current_user %}#}
+{#                            {% set liked=True %}#}
+{#                            current_user点攒了#}
+{#                            {{ liked }}#}
+{#                            <a href="{{ url_for('.commentDislike', id=comment.id) }}"><span class="glyphicon glyphicon-star" aria-hidden="true"></span></a>#}
+{#                        {% else %}#}
+{#                            current_user没点#}
+{#                            <a href="{{ url_for('.commentLike', id=comment.id) }}"><span class="glyphicon glyphicon-heart" aria-hidden="true"></span></a>#}
+{#                        {% endif %}#}
+{#                    {% endfor %}#}
+{##}
+{#                    {{ comment.commentLikes.count() }}#}
+{#                </div>#}
+
+
+
+
+
+
+
+
+
                 <div class="comment-body">
                     {% if comment.disabled %}
                         <p>这条评论已被管理员关闭</p>

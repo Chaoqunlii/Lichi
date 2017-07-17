@@ -45,10 +45,22 @@ class EditProfileAdminForm(FlaskForm):
             raise ValidationError('用户名已被注册')
 
 class PostForm(FlaskForm):
-    body = TextAreaField('说出你的想法', validators=[DataRequired()])
+    title = TextAreaField('标题', validators=[DataRequired()])
+    body = TextAreaField('tell your story', validators=[DataRequired()])
     version_intro = TextAreaField()
     submit = SubmitField('提交')
 
-class CommentForm(FlaskForm):
-    body = StringField('开始你的表演', validators=[DataRequired()])
+class NewPostContentForm(FlaskForm):
+    body = TextAreaField('tell your story', validators=[DataRequired()])
+    version_intro = TextAreaField()
     submit = SubmitField('提交')
+
+
+class CommentForm(FlaskForm):
+    body = StringField('发表你的看法', validators=[DataRequired()])
+    submit = SubmitField('提交')
+
+
+class MessageForm(FlaskForm):
+    body = StringField('告诉ta...', validators=[DataRequired()])
+    submit = SubmitField('发送')
